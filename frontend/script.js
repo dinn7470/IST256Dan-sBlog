@@ -1,43 +1,47 @@
-
-let loggedIn =false;
+let loggedIn = false;
 
 let userId;
 
-window.addEventListener('DOMContentLoaded',async ()=> {
-await fetchAndDisplayBlogPosts();
-
+window.addEventListener('DOMContentLoaded', async ()=> {
+    await fetchAndDisplayBlogPosts();
 })
 
 
-async function fetchAndDisplayBlogPosts(){
-    try{
-        const blogPostResponse =await fetch('/blogs/');
-        if(!blogPostResponse.ok){
-            throw new Error('Failed to fetch blog posts');
+async function fetchAndDisplayBlogPosts()
+{
+    try {
+        const blogPostResponse = await fetch('/blogs/')
+        if (!blogPostResponse.ok) {
+            throw new Error('Failed to fetch blog post');
         }
         const blogPosts = await blogPostResponse.json();
 
-        await Promise.all(blogPosts.map(async (blogPost)=>{
-            const authorResponse =await fetch(`/users/getUserByID/${blogPost.author}`);
-            if(!authorResponse.ok){
-                throw new Error ('Failed to fetch author details');
-            }
-            const authData=await authorResponse.json();
-            blogPost.authorName=authData.name;
-        }));
         await Promise.all(blogPosts.map(async (blogPost) => {
-            await Promise.all(blogPost.comments.map(async (comment)=>{
-                const userResponse =await fetch(`/users/getUserByID/${comment.user}`);
-                if(!userResponse.ok){
+            const authorResponse = await fetch(`/users/getUserById/${blogPost.author}`)
+            if(!authorResponse.ok)
+            {
+                throw Error('Failed to fetch author details');
+            }
+            const authData = await authorResponse.json();
+            blogPost.authorName = authData.name;
+        }));
+
+        await Promise.all(blogPosts.map(async (blogPost) =>
+        {
+            await Promise.all(blogPost.comments.map(async(comment)=>
+            {
+                const userResponse =   await fetch(`/users/getUserById/${comment.user}`);
+                if(!userResponse.ok)
+                {
                     throw new Error('Failed to fetch user details');
                 }
-                const userData =await userResponse.json();
-                comment.userName= userData.name;
+                const userData = await userResponse.json();
+                comment.userName = userData.name;
             }));
         }));
 
         await displayBlogPost(blogPosts);
-    } catch(error){
+    }catch(error){
         console.error('Error fetching content', error.message);
     }
 }
@@ -47,7 +51,7 @@ async function displayBlogPost(blogPosts) {
 
     blogPosts.forEach(blogPost => {
         const cardElement = createBlogPostCard(blogPost);
-        blogPostContainer.appendChild(cardElememnt);
+        blogPostContainer.appendChild(cardElement);
     })
 }
 
@@ -59,7 +63,7 @@ function createBlogPostCard(blogPost){
     titleElement.textContent = blogPost.title;
 
     const authorElement = document.createElement('p');
-    authorElement.textContent = blogPost.authorName;
+    authorElement.textContent = `Author: ${blogPost.authorName}`;
 
     const contentElement = document.createElement('p');
     contentElement.textContent = blogPost.content;
@@ -72,7 +76,7 @@ function createBlogPostCard(blogPost){
             return;
         }
         try{
-            const response = await fetch(`/blogs/like/${blogPost.id}`,{
+            const response = await fetch(`/blogs/like/${blogPost._id}`,{
                 method: "PUT",
                 headers: {
                     'Content-Type': 'application/json'
@@ -90,61 +94,89 @@ function createBlogPostCard(blogPost){
         }
     })
 
+    const commentsElement = createCommentsElement(blogPost);
+
     cardElement.appendChild(titleElement);
     cardElement.appendChild(authorElement);
     cardElement.appendChild(postLikesButton);
     cardElement.appendChild(contentElement);
+    cardElement.appendChild(commentsElement);
+
+    if(loggedIn){
+        const commentForm = createCommentForm(blogPost._id);
+        cardElement.appendChild(commentForm);
+    }
 
     return cardElement;
 }
 
 
-document.getElementById('loginForm').addEventListener('submit', async(event) => {
-    event.preventDefault(); // Prevent default form submission behavior
-
-    // Retrieve username and password from the form
+document.getElementById('loginForm').addEventListener('submit', async(event) =>
+{
+    event.preventDefault();
     const formData = new FormData(event.target);
     const username = formData.get('username');
-    const password = formData.get('password');
-
+    const password= formData.get('password');
     try {
-        // Send a fetch request to the login endpoint
-        const response = await fetch('/users/login/', {
+        const response = await fetch('/users/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({username, password})
         });
-
-        // Check if the response is successful
-        if (!response.ok) {
+        if(!response.ok){
             throw new Error('Login failed. Try again');
         }
-
-        // Extract data from the response
         const data = await response.json();
         userId = data._id;
         loggedIn = true;
 
-        // Update the UI to reflect successful login
-        document.getElementById('LoginFormContainer').style.display = 'none';
-        document.getElementById('BlogFormContainer').style.display = 'block';
-        document.getElementById('userGreeting').innerHTML = `<h4>Hello, ${data.name}</h4>`;
-        document.getElementById('validation').innerHTML = ''; // Clear any previous validation errors
+        console.log('Login Successful: ', data);
 
-        // Fetch and display blog posts
+        document.getElementById('loginFormContainer').style.display = 'none';
+        document.getElementById('blogFormContainer').style.display = 'block';
+
+        document.getElementById('userGreeting').innerHTML = `<h4>Hello, ${data.name}</h4>`;
+
         await fetchAndDisplayBlogPosts();
-    } catch (error) {
-        // Handle errors by logging them and displaying error messages
+    }catch(error){
         console.error('Error:', error.message);
         document.getElementById('validation').innerHTML = `<p>${error.message}</p>`;
-    } finally {
-        // Reset the form after submission
+    } finally{
         event.target.reset();
     }
 });
+document.getElementById('blogPostForm').addEventListener('submit', async(event) =>
+{
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const title = formData.get('postTitle');
+    const content= formData.get('postContent');
+    try {
+        const response = await fetch('/blogs/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({title, content, author: userId})
+        });
+        if (!response.ok) {
+            throw new Error('Login failed. Try again');
+        }
+        event.target.reset();
 
+        await fetchAndDisplayBlogPosts();
+
+        console.log('Blog post created successfully!');
+    }catch(error){
+        console.error('Error: ', error.message);
+
+        const postValidation = document.getElementById('postValidation');
+        postValidation.innerHTML = `<p>${error.message}</p>`;
+    }
+
+});
 
 function createLikeButton(likes)
 {
@@ -164,34 +196,102 @@ function createLikeButton(likes)
     likesButton.appendChild(likesCount);
 
     return likesButton;
+}
+
+function createCommentsElement(blogPost){
+    const commentsElement = document.createElement('ul');
+    commentsElement.classList.add('comment-list');
+
+    blogPost.comments.forEach((comment, index) => {
+        const commentItem = document.createElement('li');
+        const userIcon = document.createElement('img');
+        userIcon.classList.add('heart-icon');
+        userIcon.src = 'resources/user.png'; //add pic
+        userIcon.alt = 'user';
+
+        const commentContent = document.createElement('span');
+        commentContent.textContent = `${comment.userName} : ${comment.content}`;
+
+        const commentLikesButton = createLikeButton(comment.likes);
 
 
+        commentItem.appendChild(userIcon);
+        commentItem.appendChild(commentContent);
+        commentItem.appendChild(commentLikesButton);
+        commentsElement.appendChild(commentItem);
 
+        commentLikesButton.addEventListener('click', async() => {
+            if(comment.liked || !loggedIn) {
+                return;
+            }
+            try{
+                const response = await fetch(`/blogs/${blogPost._id}/comment/like/${index}`,{
+                    method: "PUT",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if(!response.ok){
+                    throw new Error('Failed to like the comment. Please try again.');
+                }
+                comment.likes++;
+                commentLikesButton.querySelector('.likes-count').textContent = `${comment.likes}`;
+                commentLikesButton.classList.add('liked');
+                comment.liked = true;
+            }
+            catch(error){
+                console.error('Error', error.message);
+            }
+        });
+    });
+    return commentsElement;
+}
 
+function createCommentForm(blogPostId){
+    const commentForm = document.createElement('form');
+    commentForm.classList.add('comment-form');
 
+    const commentTextArea = document.createElement('textarea');
+    commentTextArea.setAttribute('placeholder', 'Write your comment here...');
+    commentTextArea.setAttribute('name', "comment");
+    commentTextArea.classList.add('form-control','mb-2');
+    commentForm.appendChild(commentTextArea);
 
+    const submitButton = document.createElement('button');
+    submitButton.setAttribute('type', 'submit');
+    submitButton.textContent = 'submit';
+    submitButton.classList.add('btn', 'btn-primary');
+    commentForm.appendChild(submitButton);
 
+    commentForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
 
+        if(!loggedIn){
+            console.log('Please login to submit a comment.');
+            return;
+        }
+        const formData = new FormData(commentForm);
+        const commentContent = formData.get('comment');
+        try{
+            const response = await fetch(`/blogs/${blogPostId}/comment`,{
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({content: commentContent, userID: userId})
+            });
+            if(!response.ok){
+                throw new Error('Failed to add comment. Please try again.');
+            }
 
+            commentForm.reset();
+            console.log('Comment added successfully!');
+            await fetchAndDisplayBlogPosts();
+        }
+        catch(error){
+            console.error('Error', error.message);
+        }
+    });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return commentForm;
 }

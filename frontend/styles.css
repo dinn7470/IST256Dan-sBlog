@@ -1,22 +1,17 @@
 header{
+    background-color: #a3cff2;
     padding: 25px;
     display: flex;
     align-items: center;
-    background-color: #8ea1ff;
 }
+
 .logo{
-    width: 50px;
-    padding-right:15px;
+    padding-right: 15px;
 }
+
 header h1{
-    font-weight:bold;
-    color: #3858ff
-}
-
-.content.displayedPage{
-    width:65%;
-    padding: 30px;
-
+    font-weight: bold;
+    color: #0d3b85;
 }
 
 .content{
@@ -24,43 +19,39 @@ header h1{
 }
 
 .content .sidebar{
-    max-width:500px;
+    max-width: 500px;
     padding: 30px 70px;
-    background-color: #e8eeff;
+    background-color: #bbc1c9;
     box-shadow: 4px 0px 8px 0px #dadada;
 }
 
-.content .displayedPage{
+.content .displayPage{
     width: 65%;
     padding: 30px;
 }
 
+footer{
+    text-align: center;
+}
 
+footer a{
+    margin: 20px;
+}
 
 .blog-post-card{
     border: 1px solid #ccc;
-    border-radius :5px;
+    border-radius: 5px;
     padding: 20px;
     margin-bottom: 20px;
     background-color: #f9f9f9;
 }
-
 
 .blog-post-card h5{
     font-size: 1.5rem;
     margin-bottom: 10px;
 }
 
-.blogPost-card ul{
-    list-style-type: none;
-    padding: 0;
-}
-
-.comment-list{
-    margin-top: 10px;
-}
-
-.comment-list li{
+.comment-list li {
     border-bottom: 1px solid #ccc;
     padding: 5px 0;
 }
@@ -79,16 +70,25 @@ header h1{
     height: auto;
     margin-right: 5px;
 }
+
 .likes-count{
     font-size: 14px;
     color: #555;
 }
 
-footer{
-    text-align: center;
+hr{
+    border: none;
+    border-top: 1px solid #ccc;
+    margin: 5px 0;
 }
 
-footer a{
-    margin:20px;
+ul,li{
+    list-style-type: none;
+    padding: 5px;
+    margin-bottom: 10px;
 }
 
+.likes-button{
+    display: inline-block;
+    vertical-align: middle;
+}

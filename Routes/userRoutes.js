@@ -4,13 +4,11 @@ import * as userController from '../controllers/userController.js'
 const router = express.Router();
 
 //Get all users
-router.get('/',userController.getAllUsers);
+router.get('/', userController.getAllUsers);
 //Get user by ID
-router.get('/getUserByID',userController.getUserById);
+router.get('/getUserByID/:id', userController.getUserByID);
 //Creating a new user
-router.post('/newUser',userController.createUser);
+router.post('/', userController.createUser);
 //Login
-router.post('/login',userController.login);
+router.post('/login', userController.login);
 export default router;
-
-

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-const {Schema, model,SchemaTypes} =mongoose;
+import {SchemaTypes} from "mongoose";
+const {Schema, model} = mongoose;
 
 const blogPostSchema =new Schema({
     title: {
@@ -8,35 +9,37 @@ const blogPostSchema =new Schema({
     },
     content: {
         type: String,
-        required: false
+        required: true
     },
     likes: {
         type: Number,
         default: 0,
     },
-    createdAt:{
+    createdAt: {
         type: Date,
         default: () => Date.now(),
         immutable: true,
     },
-    author:{
+    author: {
         type: SchemaTypes.ObjectId,
-        ref:'User',
+        ref: 'User',
         required: true,
     },
-    url:{
+    url: {
         type: String,
         required: false
     },
     comments: [{
-        user:{
-            type:SchemaTypes.ObjectId,
+        user: {
+            type: SchemaTypes.ObjectId,
             ref: 'User',
             required: true,
         },
         content: String,
         likes: Number
     }]
+
 });
-const BlogModel =model('BlogModel',blogPostSchema);
+
+const BlogModel = model('BlogModel', blogPostSchema);
 export default BlogModel;
